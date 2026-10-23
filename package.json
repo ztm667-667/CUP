@@ -1,0 +1,10 @@
+{
+  "name": "hearthcup-browser-checks",
+  "private": true,
+  "scripts": {
+    "check:browser": "node tests/browser-checks.cjs"
+  },
+  "devDependencies": {
+    "playwright": "1.64.0-alpha-1790635538000"
+  }
+}

@@ -1,0 +1,3 @@
+@model ProductCard
+@{ViewData["Title"]="Delete cup";}
+<section class="container page-section"><div class="login-panel"><p class="eyebrow">A MOMENT TO DOUBLE-CHECK</p><h1>Remove this cup?</h1><p><strong>@Model.Name</strong> will be permanently removed from the catalogue. It will also disappear from baskets when they are next viewed.</p><form asp-action="Delete" asp-route-id="@Model.Id" method="post"><input type="hidden" name="version" value="@Model.Version"/><button class="button danger" type="submit">Delete permanently</button><a asp-action="Index">Cancel, keep this cup</a></form></div></section>
