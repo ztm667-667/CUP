@@ -30,18 +30,18 @@
 
 购物车是内存 Session，空闲四小时过期，应用重启后丢失；商品持久存入数据库。没有订单、支付、注册、邮件、评论和物流功能，避免扩展 Assessment 范围。商品加入购物车不会预留或扣减库存。
 
-## 解决方案结构
+## 解决方案结构（n-tier 四层）
 
 ```text
-src/HearthCup.Domain          商品实体和允许的分类/材质等选项
-src/HearthCup.Application     业务规则、输入验证、DTO 和数据访问接口
-src/HearthCup.Infrastructure  EF Core、SQL Server、仓储实现、初始数据
+src/HearthCup.Models          商品实体、允许选项、输入模型与共享契约（DTO、仓储接口）
+src/HearthCup.Utility         业务规则服务（ShopService）与共享常量 SD
+src/HearthCup.DataAccess      EF Core DbContext、仓储实现、DbInitializer 建库与目录导入
 src/HearthCup.Web             MVC、Razor、HTTP/权限/会话、CSS 和本地 SVG
- tests/HearthCup.Checks       不依赖数据库的业务检查
- docs/                       架构说明、Assessment 对应与验证范围
+tests/HearthCup.Checks        不依赖数据库的业务检查
+docs/                        架构说明、Assessment 对应与验证范围
 ```
 
-数据访问依赖应用层接口，控制器调用业务服务；业务服务可替换仓储进行测试。
+依赖方向为 Models ← Utility ← DataAccess ← Web。Models 不含工程依赖；Utility 只依赖 Models；DataAccess 实现 Models 中的 `IProductRepository`；Web 是唯一组合根，注册接口与实现。业务服务只依赖接口，所以 `tests/HearthCup.Checks` 仅引用 Models 与 Utility 即可运行，不需要 SQL Server。
 
 ## 数据库
 

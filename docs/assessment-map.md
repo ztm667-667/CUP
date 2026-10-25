@@ -8,24 +8,24 @@
 | Product browsing, filtering, pagination | `HomeController.Index`, `ProductRepository.SearchAsync`, Home Index and `_Pagination` | Combine category/material/stock, search, change sorting and page |
 | Add/view/remove basket items | `CartController`, `ShopService`, `BasketStore` | Add cups, view total, remove a cup, show empty state |
 | Consistent UI | Shared layout, site.css, local product photos and original hero illustration | Desktop and mobile, focus states and error feedback |
-| MVC and n-tier | Domain/Application/Infrastructure/Web projects | Explain references, dependency injection and a request from browser to database |
+| MVC and n-tier | Models / Utility / DataAccess / Web projects | Explain references, dependency injection and a request from browser to database |
 
 ## Architecture
 
 ```mermaid
 flowchart TD
- Browser[Browser / Razor forms] --> Web[Web: MVC controllers and view models]
- Web --> App[Application: ShopService / business rules]
- App --> Port[IProductRepository interface]
- Infra[Infrastructure: ProductRepository] -. implements .-> Port
- Infra --> EF[ShopDbContext / EF Core]
+ Browser[Browser / Razor forms] --> Web[Web: MVC controllers, view models, session basket]
+ Web --> Svc[Utility: ShopService business rules, SD constants]
+ Svc --> Port[Models: IProductRepository port, DTOs]
+ Repo[DataAccess: ProductRepository] -. implements .-> Port
+ Svc --> Contract[Models: Product, CupOptions, ProductInput]
+ Repo --> Contract
+ Repo --> EF[DataAccess: ApplicationDbContext / EF Core]
  EF --> DB[(SQL Server Express: HearthCup)]
- App --> Domain[Domain: Product and CupOptions]
- Infra --> Domain
  Web --> Session[BasketStore: visitor session, IDs and quantities only]
 ```
 
-The Web composition root registers interfaces and implementations. Business services have no reference to MVC or EF Core. Persistence is isolated behind an interface; test doubles replace it without a running database. MVC separates the HTTP controller, strongly typed view models and Razor views. n-tier adds responsibility boundaries between presentation, business rules and persistence; these are logical layers in a single process, not separately deployed servers.
+The four projects follow the module's n-tier layout: Models holds the data models and shared contracts, Utility holds the application service and constants, DataAccess holds the context, repository and initialiser, and Web holds presentation. Dependencies only ever point downwards (Models <- Utility <- DataAccess <- Web), so nothing in the lower tiers knows about MVC or Razor. The Web composition root registers interfaces and implementations. Business services have no reference to MVC or EF Core. Persistence is isolated behind an interface; test doubles replace it without a running database. MVC separates the HTTP controller, strongly typed view models and Razor views. n-tier adds responsibility boundaries between presentation, business rules and persistence; these are logical layers in a single process, not separately deployed servers.
 
 ## Five quality attributes
 

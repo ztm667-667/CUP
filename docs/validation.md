@@ -27,3 +27,15 @@ Not a penetration test, load test, availability SLA or formal user study. Tests 
 ## Separate landing page and catalogue
 
 2026-10-20 user feedback: remove redundant top links; make Find navigate to products rather than scroll; add search. Home `/` now has no product grid, Shop `/Shop` owns filter/sort/pagination, and global search submits there. Old root query links redirect to Shop. One Shop navigation link replaces two old links. Search includes colour/material as well as name/description. Release build passed with 0 warnings/errors; full browser regression increased to 20 checks and passed. Additional mobile catalogue/header-search checks passed; desktop/home/mobile screenshots visually inspected.
+
+## N-tier restructure
+
+2026-10-25. The projects now follow the module's four-tier layout: `HearthCup.Models`, `HearthCup.Utility`, `HearthCup.DataAccess` and `HearthCup.Web`. The former Domain/Application/Infrastructure split was merged into them; no business rule or page changed on purpose.
+
+- `dotnet build HearthCup.sln -c Release`: passed, 0 warnings and 0 errors.
+- `dotnet run --project tests/HearthCup.Checks -c Release`: 17 business checks passed.
+- Live smoke test on http://127.0.0.1:5199: `/health` 200; `/` landing page with 0 product cards; `/Shop` 8 per page; category filter 5; search 1; `/Cart` and `/Account/Login` 200. Anonymous `/Manage` still redirects, and after manager sign-in `/Manage`, `/Manage/Create` and `/Manage/Edit/1` return 200.
+- Create/read/delete round trip repeated against SQL Server: created a temporary cup, found it through search, opened its detail page, deleted it with its rowversion token, and the detail URL then returned 404.
+- Unchanged security and basket behaviour: POST without an antiforgery token returns 400; adding to the basket shows the service message and the expected quantity.
+
+Limitation: the screenshots in `output/playwright/` predate the current landing page and must be regenerated before use in the report or demonstration video.
