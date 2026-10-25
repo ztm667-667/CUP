@@ -1,0 +1,32 @@
+name: build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Install the .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Restore packages
+        run: dotnet restore HearthCup.sln
+
+      # The checks project needs no SQL Server, so the whole solution still builds
+      # and the business rules still run on a plain Ubuntu runner.
+      - name: Build in Release
+        run: dotnet build HearthCup.sln -c Release --no-restore --nologo
+
+      - name: Run the business checks
+        run: dotnet run --project tests/HearthCup.Checks -c Release --no-build

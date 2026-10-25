@@ -55,3 +55,15 @@ Note on the images in `output/playwright/`: they are a dated record of 20 Octobe
 **Security folder.** `AdminCredentials` moved from the web project to `HearthCup.DataAccess/Security`, matching the module's placement of credential code in the data tier. `HearthCup.DataAccess` now carries a `Microsoft.AspNetCore.App` framework reference for Identity's `PasswordHasher`, as the course's own Bulky.DataAccess does. Manager sign-in, all four management pages and the 17 business checks were re-run successfully after the move.
 
 Build: `dotnet build HearthCup.sln -c Release` passed with 0 warnings and 0 errors throughout.
+
+## Vendor libraries removed, continuous integration added
+
+2026-10-25. `wwwroot/lib` carried Bootstrap 5.3.3, jQuery 3.7.1 and jQuery Validation, but the layout only ever loaded `site.css` and `site.js`: 60 files and 9.33 MB that no page requested. The folder and the unreferenced `_ValidationScriptsPartial.cshtml` were deleted.
+
+- No view referenced either one afterwards; searching the views for `~/lib/` or `ValidationScriptsPartial` returns nothing.
+- `dotnet build HearthCup.sln -c Release`: 0 warnings, 0 errors.
+- 17 business checks passed.
+- Headless Chrome screenshots of `/`, `/Shop`, `/Shop?Category=Mugs`, `/Home/Details/1`, `/Cart`, `/Account/Login` and two mobile viewports show **0 changed pixels** against the previous build, which confirms the deleted files were never used.
+- Manager sign-in, `/Manage` and `/Manage/Edit/1` still return 200.
+
+`.github/workflows/build.yml` now runs restore, a Release build and the business checks on every push and pull request. The checks project needs no SQL Server, so the job needs no service containers.

@@ -27,6 +27,7 @@
 - 服务端读取当前价格；加入时检查库存；查看时清理删除/售罄商品并收敛到当前库存。
 - 最小管理登录保护，防伪令牌、参数校验、错误处理、数据库健康检查、编辑并发检测。
 - 适配桌面和手机、键盘焦点、跳转正文、语义化标签、减少动态效果偏好。
+- 前端只加载本地 `site.css` 与 `site.js`，不引用第三方 CSS/JS 框架；页面不发起任何外部网络请求，CSP 也只允许同源资源。
 
 购物车是内存 Session，空闲四小时过期，应用重启后丢失；商品持久存入数据库。没有订单、支付、注册、邮件、评论和物流功能，避免扩展 Assessment 范围。商品加入购物车不会预留或扣减库存。
 
@@ -59,6 +60,8 @@ dotnet ef migrations add <Name> -p src/HearthCup.DataAccess -s src/HearthCup.Web
 dotnet build HearthCup.sln
 dotnet run --project tests/HearthCup.Checks
 ```
+
+同一组命令在 `.github/workflows/build.yml` 中随每次 push / PR 执行：还原、Release 构建、跑 17 项业务检查。检查工程不依赖 SQL Server，所以在 Ubuntu runner 上也能通过。
 
 浏览器回归（需先启动网站，安装 Node.js 和 Chrome）：
 
