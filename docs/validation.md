@@ -38,7 +38,7 @@ Not a penetration test, load test, availability SLA or formal user study. Tests 
 - Create/read/delete round trip repeated against SQL Server: created a temporary cup, found it through search, opened its detail page, deleted it with its rowversion token, and the detail URL then returned 404.
 - Unchanged security and basket behaviour: POST without an antiforgery token returns 400; adding to the basket shows the service message and the expected quantity.
 
-Limitation: the screenshots in `output/playwright/` predate the current landing page and must be regenerated before use in the report or demonstration video.
+Note on the images in `output/playwright/`: they are a dated record of 20 October, not a live status page, and are git-ignored working output rather than part of the submission. Two details are worth knowing if any of them are reused in the report or video. `home-desktop.png` is captured inside the `/Shop` check, so its content is the catalogue despite the name. `home-mobile.png` shows the earlier illustration hero, while `home-preview.png` and `home-photo-mobile.png` (16:56) match the photo hero that is built today.
 
 ## Readable code, schema migrations and the security folder
 
