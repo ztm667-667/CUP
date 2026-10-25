@@ -1,6 +1,7 @@
 using System.Text.Json;
 using HearthCup.DataAccess.Data;
 using HearthCup.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace HearthCup.DataAccess.DbInitializer;
 
@@ -12,10 +13,13 @@ public sealed class DbInitializer(ApplicationDbContext db, DbInitializerOptions 
 
     public async Task InitializeAsync()
     {
-        var created = await db.Database.EnsureCreatedAsync();
+        // Does the database exist yet? Only a brand-new one gets the sample catalogue, so a manager who
+        // deliberately empties the shop does not find the cups restored on the next restart.
+        var existed = await db.Database.CanConnectAsync();
 
-        // Never recreate products when a manager has deliberately emptied the shop.
-        if (!created) return;
+        await db.Database.MigrateAsync();
+
+        if (existed) return;
 
         var products = JsonSerializer.Deserialize<List<Product>>(await File.ReadAllTextAsync(CataloguePath))
             ?? throw new InvalidOperationException("Catalogue is missing.");

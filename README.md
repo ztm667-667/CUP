@@ -45,7 +45,13 @@ docs/                        架构说明、Assessment 对应与验证范围
 
 ## 数据库
 
-连接字符串在 `src/HearthCup.Web/appsettings.json` 的 `ConnectionStrings:Shop`。默认 Windows 集成认证连接 `.\SQLEXPRESS`，数据库名为 `HearthCup`。换电脑时按实际实例名调整。示例使用 EF Core `EnsureCreated` 初始化，不包含迁移链；后续更改表结构应引入 migrations 或对本项目专属开发数据库进行受控重建，不要直接删除其他数据库。
+连接字符串在 `src/HearthCup.Web/appsettings.json` 的 `ConnectionStrings:Shop`。默认 Windows 集成认证连接 `.\SQLEXPRESS`，数据库名为 `HearthCup`。换电脑时按实际实例名调整。架构由 EF Core 迁移管理，迁移文件位于 `src/HearthCup.DataAccess/Migrations`。启动时 `IDbInitializer` 调用 `Database.MigrateAsync()` 建库或升级，**只有数据库首次创建时**才写入 18 条示例商品——管理员把商品全部删光后重启不会自动恢复。修改 `Product` 或 `ApplicationDbContext` 的映射后必须新增迁移，不要手改数据库：
+
+```powershell
+dotnet ef migrations add <Name> -p src/HearthCup.DataAccess -s src/HearthCup.Web -o Migrations
+```
+
+用早期 `EnsureCreated` 建过库的机器没有迁移历史表，需要先删除该项目专属的 `HearthCup` 数据库，让迁移接管架构；不要删除其他数据库。
 
 ## 验证
 

@@ -1,3 +1,37 @@
 @model BrowseView
 @{ViewData["Title"]="Manage the collection";}
-<section class="container page-section" id="collection"><div class="section-heading"><div><p class="eyebrow">BEHIND THE COUNTER</p><h1>Your cup collection.</h1></div><a class="button" asp-action="Create">Add a new cup +</a></div><form method="get" class="filters"><label class="sr-only" for="manageSearch">Search products</label><input id="manageSearch" name="Q" value="@Model.Query.Q" placeholder="Search the collection" maxlength="80"/><button class="button small" type="submit">Search</button><a asp-action="Index">Clear</a></form><p>@Model.Catalogue.Total products</p><div class="table-scroll"><table><thead><tr><th>Cup</th><th>Category</th><th>Price</th><th>Stock</th><th>Actions</th></tr></thead><tbody>@foreach(var p in Model.Catalogue.Items){<tr><td><a class="admin-product" asp-controller="Home" asp-action="Details" asp-route-id="@p.Id"><img src="@p.ImageUrl" alt=""/>@p.Name</a></td><td>@p.Category</td><td>@p.Price.ToString("C")</td><td>@p.Stock</td><td class="table-actions"><a asp-action="Edit" asp-route-id="@p.Id">Edit</a><a class="danger-text" asp-action="Delete" asp-route-id="@p.Id">Delete</a></td></tr>}</tbody></table></div>@if(Model.Catalogue.Total==0){<p class="empty">No cups found.</p>}<partial name="_Pagination" model="Model"/></section>
+<section class="container page-section" id="collection">
+    <div class="section-heading">
+        <div>
+            <p class="eyebrow">BEHIND THE COUNTER</p>
+            <h1>Your cup collection.</h1>
+        </div>
+        <a class="button" asp-action="Create">Add a new cup +</a>
+    </div>
+
+    <form method="get" class="filters"><label class="sr-only" for="manageSearch">Search products</label><input id="manageSearch" name="Q" value="@Model.Query.Q" placeholder="Search the collection" maxlength="80"/><button class="button small" type="submit">Search</button><a asp-action="Index">Clear</a></form>
+
+    <p>@Model.Catalogue.Total products</p>
+
+    <div class="table-scroll">
+        <table>
+            <thead>
+                <tr><th>Cup</th><th>Category</th><th>Price</th><th>Stock</th><th>Actions</th></tr>
+            </thead>
+            <tbody>
+                @foreach(var p in Model.Catalogue.Items){
+                    <tr>
+                        <td><a class="admin-product" asp-controller="Home" asp-action="Details" asp-route-id="@p.Id"><img src="@p.ImageUrl" alt=""/>@p.Name</a></td>
+                        <td>@p.Category</td>
+                        <td>@p.Price.ToString("C")</td>
+                        <td>@p.Stock</td>
+                        <td class="table-actions"><a asp-action="Edit" asp-route-id="@p.Id">Edit</a><a class="danger-text" asp-action="Delete" asp-route-id="@p.Id">Delete</a></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    @if(Model.Catalogue.Total==0){<p class="empty">No cups found.</p>}
+    <partial name="_Pagination" model="Model"/>
+</section>

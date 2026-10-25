@@ -1,7 +1,7 @@
 using System.Security.Claims;
+using HearthCup.DataAccess.Security;
 using HearthCup.Utility.Constants;
 using HearthCup.Web.Models;
-using HearthCup.Web.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;

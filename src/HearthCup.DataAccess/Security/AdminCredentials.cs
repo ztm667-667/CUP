@@ -1,12 +1,16 @@
 using System.Security.Cryptography;
 using System.Text.Json;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 
-namespace HearthCup.Web.Services;
+namespace HearthCup.DataAccess.Security;
 
 /// <summary>
-/// The local manager account. In development a random password is generated once and hashed; only the
-/// hash is verified at sign-in. Production refuses to start without Admin:PasswordHash configured.
+/// The local manager account. It sits in the security folder of the data tier because it is the shop's
+/// stored credential: development generates a random password once and keeps only its hash, and sign-in
+/// verifies that hash. Production refuses to start without Admin:PasswordHash configured.
 /// </summary>
 public sealed class AdminCredentials
 {
@@ -15,7 +19,7 @@ public sealed class AdminCredentials
     private readonly string hash;
     private readonly PasswordHasher<string> hasher = new();
 
-    public AdminCredentials(IWebHostEnvironment env, IConfiguration config)
+    public AdminCredentials(IWebHostEnvironment environment, IConfiguration config)
     {
         var configured = config["Admin:PasswordHash"];
 
@@ -25,12 +29,12 @@ public sealed class AdminCredentials
             return;
         }
 
-        if (!env.IsDevelopment())
+        if (!environment.IsDevelopment())
         {
             throw new InvalidOperationException("Configure Admin:PasswordHash before production use.");
         }
 
-        var directory = Path.Combine(env.ContentRootPath, ".local");
+        var directory = Path.Combine(environment.ContentRootPath, ".local");
         Directory.CreateDirectory(directory);
 
         var path = Path.Combine(directory, "admin.json");
@@ -41,6 +45,8 @@ public sealed class AdminCredentials
             return;
         }
 
+        // A random one-off development password; the plain text is written beside the hash only so the
+        // developer can sign in locally. It is git-ignored and must never ship with the submission.
         var password = Convert.ToHexString(RandomNumberGenerator.GetBytes(12)) + "a!";
         hash = hasher.HashPassword(UserName, password);
 

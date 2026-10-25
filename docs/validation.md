@@ -39,3 +39,19 @@ Not a penetration test, load test, availability SLA or formal user study. Tests 
 - Unchanged security and basket behaviour: POST without an antiforgery token returns 400; adding to the basket shows the service message and the expected quantity.
 
 Limitation: the screenshots in `output/playwright/` predate the current landing page and must be regenerated before use in the report or demonstration video.
+
+## Readable code, schema migrations and the security folder
+
+2026-10-25. Three follow-up changes.
+
+**Razor and CSS formatting.** Every view and `site.css` were re-indented: the stylesheet went from 13 lines to about 1,470, and the layout from 4 lines to 60. Only whitespace changed. Verified three ways:
+
+- The new stylesheet is identical to the old one with all whitespace stripped, which proves no character other than whitespace moved.
+- The rendered text of `/`, `/Shop`, `/Shop?Category=Mugs`, `/Home/Details/1`, `/Cart` and `/Account/Login` is identical before and after.
+- Headless Chrome screenshots of those six pages plus two mobile viewports show **0 changed pixels** against the pre-format baseline.
+
+**EF Core migrations.** `Migrations/20261025232541_InitialCreate` now owns the schema. `IDbInitializer` calls `Database.MigrateAsync()` instead of `EnsureCreatedAsync()`, and seeds only when the database did not exist yet. The old development database was dropped and rebuilt by the migration; `dotnet ef migrations list` reports the initial migration applied and `/Shop` still lists the 18 catalogue products.
+
+**Security folder.** `AdminCredentials` moved from the web project to `HearthCup.DataAccess/Security`, matching the module's placement of credential code in the data tier. `HearthCup.DataAccess` now carries a `Microsoft.AspNetCore.App` framework reference for Identity's `PasswordHasher`, as the course's own Bulky.DataAccess does. Manager sign-in, all four management pages and the 17 business checks were re-run successfully after the move.
+
+Build: `dotnet build HearthCup.sln -c Release` passed with 0 warnings and 0 errors throughout.

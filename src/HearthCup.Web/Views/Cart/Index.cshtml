@@ -1,3 +1,41 @@
 @model CartView
 @{ViewData["Title"]="Your basket";}
-<section class="container page-section"><p class="eyebrow">A FEW LITTLE THINGS FOR HOME</p><h1>Your basket.</h1>@if(Model.Changed){<p class="notice" role="status">Your basket has been updated to match current availability. Removed cups and out-of-stock items cannot be kept.</p>}@if(Model.Lines.Count==0){<div class="empty"><span>⌑</span><h2>A little room for something lovely.</h2><p>Your basket is empty. Shall we find your new favourite cup?</p><a class="button" asp-controller="Home" asp-action="Shop">Explore the cups ↗</a></div>}else{<div class="basket-layout"><div>@foreach(var line in Model.Lines){<article class="basket-line"><a asp-controller="Home" asp-action="Details" asp-route-id="@line.Product.Id"><img src="@line.Product.ImageUrl" alt="@line.Product.Name"/></a><div><h2><a asp-controller="Home" asp-action="Details" asp-route-id="@line.Product.Id">@line.Product.Name</a></h2><p>@line.Product.Colour · @line.Product.CapacityMl ml</p><p>@line.Product.Price.ToString("C") each · Quantity @line.Quantity</p><form asp-action="Remove" method="post"><input type="hidden" name="id" value="@line.Product.Id"/><button class="text-button" type="submit" aria-label="Remove @line.Product.Name">Remove</button></form></div><strong>@line.Subtotal.ToString("C")</strong></article>}</div><aside class="basket-summary"><p class="eyebrow">YOUR EVERYDAY FINDS</p><h2>A little comfort.</h2><div><span>@Model.Count cup@(Model.Count==1?"":"s")</span><strong>@Model.Total.ToString("C")</strong></div><p>Basket total in GBP. Your cups are saved for this browsing session. Stock is checked whenever you view your basket.</p><a class="button" asp-controller="Home" asp-action="Shop">Keep exploring ↗</a></aside></div>}</section>
+<section class="container page-section">
+    <p class="eyebrow">A FEW LITTLE THINGS FOR HOME</p>
+    <h1>Your basket.</h1>
+
+    @if(Model.Changed){<p class="notice" role="status">Your basket has been updated to match current availability. Removed cups and out-of-stock items cannot be kept.</p>}
+
+    @if(Model.Lines.Count==0){
+        <div class="empty">
+            <span>⌑</span>
+            <h2>A little room for something lovely.</h2>
+            <p>Your basket is empty. Shall we find your new favourite cup?</p>
+            <a class="button" asp-controller="Home" asp-action="Shop">Explore the cups ↗</a>
+        </div>
+    }else{
+        <div class="basket-layout">
+            <div>
+                @foreach(var line in Model.Lines){
+                    <article class="basket-line">
+                        <a asp-controller="Home" asp-action="Details" asp-route-id="@line.Product.Id"><img src="@line.Product.ImageUrl" alt="@line.Product.Name"/></a>
+                        <div>
+                            <h2><a asp-controller="Home" asp-action="Details" asp-route-id="@line.Product.Id">@line.Product.Name</a></h2>
+                            <p>@line.Product.Colour · @line.Product.CapacityMl ml</p>
+                            <p>@line.Product.Price.ToString("C") each · Quantity @line.Quantity</p>
+                            <form asp-action="Remove" method="post"><input type="hidden" name="id" value="@line.Product.Id"/><button class="text-button" type="submit" aria-label="Remove @line.Product.Name">Remove</button></form>
+                        </div>
+                        <strong>@line.Subtotal.ToString("C")</strong>
+                    </article>
+                }
+            </div>
+            <aside class="basket-summary">
+                <p class="eyebrow">YOUR EVERYDAY FINDS</p>
+                <h2>A little comfort.</h2>
+                <div><span>@Model.Count cup@(Model.Count==1?"":"s")</span><strong>@Model.Total.ToString("C")</strong></div>
+                <p>Basket total in GBP. Your cups are saved for this browsing session. Stock is checked whenever you view your basket.</p>
+                <a class="button" asp-controller="Home" asp-action="Shop">Keep exploring ↗</a>
+            </aside>
+        </div>
+    }
+</section>

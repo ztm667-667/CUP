@@ -3,6 +3,7 @@ using System.Threading.RateLimiting;
 using HearthCup.DataAccess.Data;
 using HearthCup.DataAccess.DbInitializer;
 using HearthCup.DataAccess.Repository;
+using HearthCup.DataAccess.Security;
 using HearthCup.Models;
 using HearthCup.Utility.Constants;
 using HearthCup.Utility.Services;

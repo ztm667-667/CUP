@@ -1,5 +1,40 @@
 @model BrowseView
 @{ViewData["Title"]="Shop the cups";var q=Model.Query;var all=q.Category is null&&q.Material is null&&string.IsNullOrEmpty(q.Q)&&!q.InStock;}
-<section class="container collection" id="collection"><div class="section-heading"><div><p class="eyebrow">A CUP FOR EVERY CORNER OF LIFE</p><h1>@(q.Category??"Find your everyday favourite.")</h1></div><p>From the first coffee to the last cup of tea.<br/>Find the one you'll reach for again and again.</p></div><div class="category-tabs" aria-label="Cup categories"><a class="@(q.Category is null?"active":"")" asp-action="Shop">All cups <span>↗</span></a>@foreach(var c in CupOptions.Categories){<a class="@(q.Category==c?"active":"")" asp-action="Shop" asp-route-Category="@c">@c</a>}</div>
-<form method="get" asp-action="Shop" class="filters" role="search"><input type="hidden" name="Category" value="@q.Category"/><div class="search-field"><label class="sr-only" for="search">Search cups</label><input id="search" type="search" name="Q" value="@q.Q" maxlength="80" placeholder="Find your everyday favourite…"/></div><div><label class="sr-only" for="material">Material</label><select name="Material" id="material"><option value="">All materials</option>@foreach(var m in CupOptions.Materials){<option value="@m" selected="@(q.Material==m)">@m</option>}</select></div><div><label class="sr-only" for="sort">Sort cups</label><select name="Sort" id="sort"><option value="featured" selected="@(q.Sort=="featured")">Our favourites</option><option value="price-low" selected="@(q.Sort=="price-low")">Price: low to high</option><option value="price-high" selected="@(q.Sort=="price-high")">Price: high to low</option><option value="name" selected="@(q.Sort=="name")">Name: A to Z</option></select></div><label class="check"><input type="checkbox" name="InStock" value="true" checked="@q.InStock"/> In stock</label><button class="button small" type="submit">Find cups</button></form><div class="results-bar"><span>@Model.Catalogue.Total little reasons to put the kettle on</span>@if(!all){<a asp-action="Shop">Clear filters ×</a>}</div>
-@if(Model.Catalogue.Items.Count==0){<div class="empty"><span>⌑</span><h3>No cups found, just yet.</h3><p>Try another word or clear your filters to see the whole collection.</p><a class="button" asp-action="Shop">Browse all cups</a></div>}<div class="product-grid">@foreach(var p in Model.Catalogue.Items){<partial name="_ProductCard" model="p"/>}</div><partial name="_Pagination" model="Model"/></section>
+<section class="container collection" id="collection">
+    <div class="section-heading">
+        <div>
+            <p class="eyebrow">A CUP FOR EVERY CORNER OF LIFE</p>
+            <h1>@(q.Category??"Find your everyday favourite.")</h1>
+        </div>
+        <p>From the first coffee to the last cup of tea.<br/>Find the one you'll reach for again and again.</p>
+    </div>
+
+    <div class="category-tabs" aria-label="Cup categories">
+        <a class="@(q.Category is null?"active":"")" asp-action="Shop">All cups <span>↗</span></a>
+        @foreach(var c in CupOptions.Categories){<a class="@(q.Category==c?"active":"")" asp-action="Shop" asp-route-Category="@c">@c</a>}
+    </div>
+
+    <form method="get" asp-action="Shop" class="filters" role="search">
+        <input type="hidden" name="Category" value="@q.Category"/>
+        <div class="search-field"><label class="sr-only" for="search">Search cups</label><input id="search" type="search" name="Q" value="@q.Q" maxlength="80" placeholder="Find your everyday favourite…"/></div>
+        <div><label class="sr-only" for="material">Material</label><select name="Material" id="material"><option value="">All materials</option>@foreach(var m in CupOptions.Materials){<option value="@m" selected="@(q.Material==m)">@m</option>}</select></div>
+        <div><label class="sr-only" for="sort">Sort cups</label><select name="Sort" id="sort"><option value="featured" selected="@(q.Sort=="featured")">Our favourites</option><option value="price-low" selected="@(q.Sort=="price-low")">Price: low to high</option><option value="price-high" selected="@(q.Sort=="price-high")">Price: high to low</option><option value="name" selected="@(q.Sort=="name")">Name: A to Z</option></select></div>
+        <label class="check"><input type="checkbox" name="InStock" value="true" checked="@q.InStock"/> In stock</label>
+        <button class="button small" type="submit">Find cups</button>
+    </form>
+
+    <div class="results-bar"><span>@Model.Catalogue.Total little reasons to put the kettle on</span>@if(!all){<a asp-action="Shop">Clear filters ×</a>}</div>
+
+    @if(Model.Catalogue.Items.Count==0){
+        <div class="empty">
+            <span>⌑</span>
+            <h3>No cups found, just yet.</h3>
+            <p>Try another word or clear your filters to see the whole collection.</p>
+            <a class="button" asp-action="Shop">Browse all cups</a>
+        </div>
+    }
+    <div class="product-grid">
+        @foreach(var p in Model.Catalogue.Items){<partial name="_ProductCard" model="p"/>}
+    </div>
+    <partial name="_Pagination" model="Model"/>
+</section>
