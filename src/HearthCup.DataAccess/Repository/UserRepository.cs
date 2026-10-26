@@ -22,13 +22,34 @@ public sealed class UserRepository(ApplicationDbContext db) : IUserRepository
         return user.Id;
     }
 
-    /// <summary>Idempotent: creates the configured manager once, then leaves whatever exists alone.</summary>
+    /// <summary>
+    /// Keeps exactly one manager and treats configuration as authoritative for its login name: if the
+    /// configured email changed, the existing manager row is renamed rather than duplicated.
+    /// </summary>
     public async Task<User> EnsureManagerAsync(string email, string passwordHash, CancellationToken ct = default)
     {
-        var existing = await db.Users.FirstOrDefaultAsync(x => x.Email == email, ct);
-        if (existing is not null) return existing;
+        var byEmail = await db.Users.FirstOrDefaultAsync(x => x.Email == email, ct);
+        if (byEmail is not null)
+        {
+            // Never promote a self-registered account to manager; that would be privilege escalation.
+            if (byEmail.Role != Roles.Manager)
+            {
+                throw new InvalidOperationException(
+                    "A non-manager account already uses the configured Admin:Email. Choose another address.");
+            }
 
-        var manager = new User
+            return byEmail;
+        }
+
+        var manager = await db.Users.FirstOrDefaultAsync(x => x.Role == Roles.Manager, ct);
+        if (manager is not null)
+        {
+            manager.Email = email;
+            await db.SaveChangesAsync(ct);
+            return manager;
+        }
+
+        var created = new User
         {
             Email = email,
             PasswordHash = passwordHash,
@@ -36,8 +57,8 @@ public sealed class UserRepository(ApplicationDbContext db) : IUserRepository
             CreatedAt = DateTime.UtcNow
         };
 
-        db.Users.Add(manager);
+        db.Users.Add(created);
         await db.SaveChangesAsync(ct);
-        return manager;
+        return created;
     }
 }
