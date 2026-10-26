@@ -4,7 +4,7 @@
     <p class="eyebrow">A FEW LITTLE THINGS FOR HOME</p>
     <h1>Your basket.</h1>
 
-    @if(Model.Changed){<p class="notice" role="status">Your basket has been updated to match current availability. Removed cups and out-of-stock items cannot be kept.</p>}
+    @if(Model.Changed){<p class="notice" role="status">Your basket has been updated to match current availability. Removed, delisted or out-of-stock cups cannot be kept.</p>}
 
     @if(Model.Lines.Count==0){
         <div class="empty">
@@ -22,8 +22,16 @@
                         <div>
                             <h2><a asp-controller="Home" asp-action="Details" asp-route-id="@line.Product.Id">@line.Product.Name</a></h2>
                             <p>@line.Product.Colour · @line.Product.CapacityMl ml</p>
-                            <p>@line.Product.Price.ToString("C") each · Quantity @line.Quantity</p>
-                            <form asp-action="Remove" method="post"><input type="hidden" name="id" value="@line.Product.Id"/><button class="text-button" type="submit" aria-label="Remove @line.Product.Name">Remove</button></form>
+                            <p>@line.Product.Price.ToString("C") each · @line.Product.Stock in stock</p>
+                            <div class="basket-actions">
+                                <form asp-action="SetQuantity" method="post" class="qty-control">
+                                    <input type="hidden" name="id" value="@line.Product.Id"/>
+                                    <button type="submit" name="quantity" value="@(line.Quantity - 1)" aria-label="Reduce quantity of @line.Product.Name">−</button>
+                                    <span aria-live="polite">@line.Quantity</span>
+                                    <button type="submit" name="quantity" value="@(line.Quantity + 1)" aria-label="Increase quantity of @line.Product.Name" disabled="@(line.Quantity >= line.Product.Stock)">+</button>
+                                </form>
+                                <form asp-action="Remove" method="post"><input type="hidden" name="id" value="@line.Product.Id"/><button class="text-button" type="submit" aria-label="Remove @line.Product.Name">Remove</button></form>
+                            </div>
                         </div>
                         <strong>@line.Subtotal.ToString("C")</strong>
                     </article>
@@ -33,7 +41,8 @@
                 <p class="eyebrow">YOUR EVERYDAY FINDS</p>
                 <h2>A little comfort.</h2>
                 <div><span>@Model.Count cup@(Model.Count==1?"":"s")</span><strong>@Model.Total.ToString("C")</strong></div>
-                <p>Basket total in GBP. Your cups are saved for this browsing session. Stock is checked whenever you view your basket.</p>
+                <form asp-action="Checkout" method="post" class="checkout-form"><button class="button" type="submit">Place the order ↗</button></form>
+                <p>Basket total in GBP. Quantities are checked against live stock when you place the order.</p>
                 <a class="button" asp-controller="Home" asp-action="Shop">Keep exploring ↗</a>
             </aside>
         </div>

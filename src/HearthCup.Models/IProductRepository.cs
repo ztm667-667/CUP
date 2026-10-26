@@ -15,4 +15,7 @@ public interface IProductRepository
     Task<int> SaveAsync(int? id, ProductInput input, byte[]? expectedVersion, CancellationToken ct = default);
 
     Task DeleteAsync(int id, byte[] expectedVersion, CancellationToken ct = default);
+
+    /// <summary>Lists or delists a cup without touching the rest of its record.</summary>
+    Task SetListedAsync(int id, bool listed, CancellationToken ct = default);
 }

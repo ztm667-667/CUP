@@ -7,7 +7,6 @@ using HearthCup.DataAccess.Security;
 using HearthCup.Models;
 using HearthCup.Utility.Constants;
 using HearthCup.Utility.Services;
-using HearthCup.Web.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -28,23 +27,23 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 // Composition root: the only place that knows which class fills which port.
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<ICartRepository, CartRepository>();
+builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+builder.Services.AddScoped<IPasswordHasher, PasswordHasherAdapter>();
+
 builder.Services.AddScoped<ShopService>();
-builder.Services.AddSingleton(new DbInitializerOptions { ContentRootPath = builder.Environment.ContentRootPath });
-builder.Services.AddScoped<IDbInitializer, DbInitializer>();
+builder.Services.AddScoped<AccountService>();
+builder.Services.AddScoped<OrderService>();
 
-builder.Services.AddDistributedMemoryCache();
-builder.Services.AddSession(options =>
+builder.Services.AddSingleton(new DbInitializerOptions
 {
-    options.IdleTimeout = TimeSpan.FromHours(4);
-    options.Cookie.Name = "HearthCup.Basket";
-    options.Cookie.HttpOnly = true;
-    options.Cookie.IsEssential = true;
-    options.Cookie.SameSite = SameSiteMode.Lax;
+    ContentRootPath = builder.Environment.ContentRootPath,
+    AdminEmail = builder.Configuration["Admin:Email"] ?? "",
+    AdminPassword = builder.Configuration["Admin:Password"] ?? "",
+    IsDevelopment = builder.Environment.IsDevelopment()
 });
-
-builder.Services.AddHttpContextAccessor();
-builder.Services.AddScoped<BasketStore>();
-builder.Services.AddSingleton<AdminCredentials>();
+builder.Services.AddScoped<IDbInitializer, DbInitializer>();
 
 builder.Services
     .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
@@ -52,10 +51,10 @@ builder.Services
     {
         options.LoginPath = "/Account/Login";
         options.AccessDeniedPath = "/Account/Login";
-        options.Cookie.Name = "HearthCup.Manager";
+        options.Cookie.Name = "HearthCup.Account";
         options.Cookie.HttpOnly = true;
         options.Cookie.SameSite = SameSiteMode.Lax;
-        options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
+        options.ExpireTimeSpan = TimeSpan.FromMinutes(60);
         options.SlidingExpiration = true;
     });
 
@@ -76,9 +75,6 @@ builder.Services.AddRateLimiter(options =>
 });
 
 var app = builder.Build();
-
-// Resolve before serving. Development creates a local-only manager credential; production requires configuration.
-_ = app.Services.GetRequiredService<AdminCredentials>();
 
 try
 {
@@ -118,7 +114,6 @@ app.Use(async (context, next) =>
 
 app.UseStaticFiles();
 app.UseRouting();
-app.UseSession();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseRateLimiter();

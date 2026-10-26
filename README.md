@@ -8,45 +8,56 @@
 2. 将 `HearthCup.Web` 设为启动项目，选择 `HearthCup` 启动配置。
 3. 确认本机 `SQL Server (SQLEXPRESS)` 服务已运行。
 4. 按 F5 或 Ctrl+F5。浏览器打开 `http://localhost:5188`。
-5. 首次运行创建独立 `HearthCup` 数据库及 18 条亚马逊来源商品。不会修改课堂 Bulky 数据库。
+5. 首次运行由迁移建库，写入 18 条亚马逊来源商品，并创建唯一的店铺管理员账号。
 
 也可在项目根目录运行 `powershell -ExecutionPolicy Bypass -File .\Start.ps1`。需要 .NET 9 SDK；首次运行需还原 NuGet 包。
 
-## 管理端
+## 账号与角色
 
-入口：页脚 **Shop manager**，或 `/Manage`。
+两种身份，登录后进入的界面完全不同：
 
-首次开发启动自动生成随机的本地管理密码，用户名为 `manager`。在 `src/HearthCup.Web/.local/admin-login.txt` 查看。`.local` 不位于静态文件目录，且被 Git 忽略。不要将该文件放进提交包或公开仓库。实际验证用的是哈希密码；本地文本仅供开发者取用。生产环境不会自动生成账号，需设置 `Admin:PasswordHash` 并部署 HTTPS。
+| 身份 | 来源 | 能做什么 |
+|---|---|---|
+| 管理员（Manager） | 由 `appsettings.json` 的 `Admin:Email` / `Admin:Password` 在首次启动时写入数据库 | 商品增删改、上下架、查看全部订单、点“Mark as shipped”发货 |
+| 买家（Buyer） | `/Account/Register` 自助注册 | 浏览、加购、改数量、下单、查看自己的订单状态 |
+
+- 管理员账号默认 `mmx6671280@gamil.com` / `123456`，请在首次运行前按需修改配置（改邮箱后需删除旧的管理员行重建）。
+- 注册只开放买家：邮箱作为登录名，密码必须是 6 位数字，注册成功后自动登录。
+- 登录后按角色跳转：管理员进 `/Manage`，买家进 `/Shop`。
+- 所有密码只以哈希形式存库（`PasswordHasher`），数据库里没有明文。
+- 开发环境同时把当前管理员凭据写到 `src/HearthCup.Web/.local/admin-login.txt`，供本地登录与浏览器脚本读取；该目录被 Git 忽略，不要放进提交包。
 
 ## 已实现范围
 
-- 商品新增、查看、修改、删除；删除前确认。
-- 商品目录、名称/描述搜索、类型/材质/库存筛选、价格/名称排序、分页（每页 8 件）。
-- 商品详情、价格、库存、容量、材质、颜色及本地商品照片。
-- 无需买家注册的购物车：添加、查看、移除、合并同款、数量角标和小计。
-- 服务端读取当前价格；加入时检查库存；查看时清理删除/售罄商品并收敛到当前库存。
-- 最小管理登录保护，防伪令牌、参数校验、错误处理、数据库健康检查、编辑并发检测。
+- 管理员：商品新增、查看、修改、删除（删除前确认）；**上架/下架**切换；商品名称、介绍、价格、库存、图片、分类等全部可编辑。
+- 买家：商品目录、名称/描述/颜色/材质搜索、分类与材质筛选、库存筛选、价格/名称排序、分页（每页 8 件）。
+- 购物车：登录后可见，按账号存库；支持**加减数量**、移除、小计与合计；下架或售罄的商品在查看时自动清理并收敛到当前库存。
+- 下单：一次事务内完成校验、写订单（价格与名称快照）、扣库存、清空购物车；库存不足或已下架会被拒绝并给出提示。
+- 订单：买家只看自己的订单与状态（Pending / Shipped）；管理员看全部订单、买家邮箱、明细与金额，并可点发货。
+- 安全：角色授权（买家进不了 `/Manage`，管理员进不了购物车与订单页）、Cookie 认证、防伪令牌、登录限流、数据注解与服务端校验、Razor 编码、CSP。
 - 适配桌面和手机、键盘焦点、跳转正文、语义化标签、减少动态效果偏好。
-- 前端只加载本地 `site.css` 与 `site.js`，不引用第三方 CSS/JS 框架；页面不发起任何外部网络请求，CSP 也只允许同源资源。
+- 前端只加载本地 `site.css`、`shop.css` 与 `site.js`，不引用第三方 CSS/JS 框架；页面不发起任何外部网络请求，CSP 也只允许同源资源。
 
-购物车是内存 Session，空闲四小时过期，应用重启后丢失；商品持久存入数据库。没有订单、支付、注册、邮件、评论和物流功能，避免扩展 Assessment 范围。商品加入购物车不会预留或扣减库存。
+没有支付、邮件、评论与真实物流；发货只是把订单状态改为 Shipped。商品加入购物车不预占库存，库存在下单事务内扣减。
 
 ## 解决方案结构（n-tier 四层）
 
 ```text
-src/HearthCup.Models          商品实体、允许选项、输入模型与共享契约（DTO、仓储接口）
-src/HearthCup.Utility         业务规则服务（ShopService）与共享常量 SD
-src/HearthCup.DataAccess      EF Core DbContext、仓储实现、DbInitializer 建库与目录导入
-src/HearthCup.Web             MVC、Razor、HTTP/权限/会话、CSS 和本地 SVG
-tests/HearthCup.Checks        不依赖数据库的业务检查
+src/HearthCup.Models          商品与用户、订单、购物车实体，DTO、仓储与哈希端口
+src/HearthCup.Utility         业务规则服务（ShopService / AccountService / OrderService）与常量 SD
+src/HearthCup.DataAccess      EF Core DbContext、四个仓储、PasswordHasherAdapter、DbInitializer、迁移
+src/HearthCup.Web             MVC、Razor、ViewComponent、认证与授权、CSS
+tests/HearthCup.Checks        不依赖数据库的业务检查（29 项）
 docs/                        架构说明、Assessment 对应与验证范围
 ```
 
-依赖方向为 Models ← Utility ← DataAccess ← Web。Models 不含工程依赖；Utility 只依赖 Models；DataAccess 实现 Models 中的 `IProductRepository`；Web 是唯一组合根，注册接口与实现。业务服务只依赖接口，所以 `tests/HearthCup.Checks` 仅引用 Models 与 Utility 即可运行，不需要 SQL Server。
+依赖方向为 Models ← Utility ← DataAccess ← Web。Models 不含工程依赖；Utility 只依赖 Models；DataAccess 实现 Models 里的仓储端口与 `IPasswordHasher`；Web 是唯一组合根。业务服务只依赖端口，所以 `tests/HearthCup.Checks` 仅引用 Models 与 Utility 即可运行，不需要 SQL Server。
 
 ## 数据库
 
-连接字符串在 `src/HearthCup.Web/appsettings.json` 的 `ConnectionStrings:Shop`。默认 Windows 集成认证连接 `.\SQLEXPRESS`，数据库名为 `HearthCup`。换电脑时按实际实例名调整。架构由 EF Core 迁移管理，迁移文件位于 `src/HearthCup.DataAccess/Migrations`。启动时 `IDbInitializer` 调用 `Database.MigrateAsync()` 建库或升级，**只有数据库首次创建时**才写入 18 条示例商品——管理员把商品全部删光后重启不会自动恢复。修改 `Product` 或 `ApplicationDbContext` 的映射后必须新增迁移，不要手改数据库：
+连接字符串在 `src/HearthCup.Web/appsettings.json` 的 `ConnectionStrings:Shop`。默认 Windows 集成认证连接 `.\SQLEXPRESS`，数据库名为 `HearthCup`。换电脑时按实际实例名调整。
+
+架构由 EF Core 迁移管理，迁移文件位于 `src/HearthCup.DataAccess/Migrations`。启动时 `IDbInitializer` 调用 `Database.MigrateAsync()` 建库或升级，**只有数据库首次创建时**才写入 18 条示例商品——管理员把商品全部删光后重启不会自动恢复；管理员账号则在每次启动时确保存在。修改实体或 `ApplicationDbContext` 的映射后必须新增迁移，不要手改数据库：
 
 ```powershell
 dotnet ef migrations add <Name> -p src/HearthCup.DataAccess -s src/HearthCup.Web -o Migrations
@@ -61,7 +72,7 @@ dotnet build HearthCup.sln
 dotnet run --project tests/HearthCup.Checks
 ```
 
-同一组命令在 `.github/workflows/build.yml` 中随每次 push / PR 执行：还原、Release 构建、跑 17 项业务检查。检查工程不依赖 SQL Server，所以在 Ubuntu runner 上也能通过。
+同一组命令在 `.github/workflows/build.yml` 中随每次 push / PR 执行：还原、Release 构建、跑 29 项业务检查。检查工程不依赖 SQL Server，所以在 Ubuntu runner 上也能通过。
 
 浏览器回归（需先启动网站，安装 Node.js 和 Chrome）：
 
@@ -70,7 +81,7 @@ npm install
 npm run check:browser
 ```
 
-浏览器脚本从本地 `.local` 文件读取密码，不硬编码凭据。它创建一个 `QA Family Cup` 测试商品并在测试完成时删除；请只在本地开发数据库运行。输出在 `output/playwright/`。已执行情况见 `docs/validation.md`。
+脚本从 `.local` 文件读取管理员凭据，自行注册一个测试买家走完“加购 → 下单 → 发货 → 查看状态”，之后不再残留测试数据（订单无法删除，请只在本地开发库运行）。输出在 `output/playwright/`。已执行情况见 `docs/validation.md`。
 
 ## 演示与报告准备
 

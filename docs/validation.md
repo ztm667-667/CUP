@@ -67,3 +67,19 @@ Build: `dotnet build HearthCup.sln -c Release` passed with 0 warnings and 0 erro
 - Manager sign-in, `/Manage` and `/Manage/Edit/1` still return 200.
 
 `.github/workflows/build.yml` now runs restore, a Release build and the business checks on every push and pull request. The checks project needs no SQL Server, so the job needs no service containers.
+
+## Buyer and manager accounts, orders and listing
+
+2026-10-26. The shop moved from one seeded manager to two real roles, with the basket and orders persisted per account.
+
+- New tables `Users`, `Orders`, `OrderItems`, `CartItems`; `Products` gained `IsListed` and the paging query hides delisted cups unless the caller asks for them.
+- Migrations `20261026001001_AccountsAndOrders` and `20261026001145_ListExistingProducts`. The second one backfills `IsListed = 1` for the existing catalogue, because the first one's `ALTER TABLE` defaulted every existing row to `false` and hid all 18 products from the shop.
+- `dotnet build HearthCup.sln -c Release`: 0 warnings, 0 errors.
+- 29 business checks pass, 12 of them new: registration rules (five digit password, letters, malformed email, duplicate), sign-in, empty basket, delisted cup, over-stock order, price snapshot and stock deltas, and shipping once.
+- End-to-end against SQL Server: register a buyer, add two cups, raise the quantity to three, check out. Order #1 is Pending, product 1 drops from 8 to 5 in stock, the manager sees the order with the buyer's email, pressing "Mark as shipped" changes the status, and the buyer's own order page then shows Shipped.
+- Role guards: anonymous `/Cart` and `/Orders` return 302 to the login page, a buyer gets 302 on `/Manage`, and a manager gets 302 on `/Cart`.
+- Listing: delisting product 2 takes the public shop from 18 to 17 while `/Manage` still shows the cup; re-listing restores 18.
+
+Checkout first failed with 503. `EnableRetryOnFailure` installs a retrying execution strategy, and EF refuses a user-initiated transaction outside it. `OrderRepository.PlaceAsync` now runs the whole unit of work inside `CreateExecutionStrategy().ExecuteAsync`, clearing the change tracker on each attempt so a retry cannot double-apply stock deltas.
+
+Limitation: Playwright is not installed on this machine, so the rewritten `tests/browser-checks.cjs` was not executed; every step it covers was verified with direct HTTP requests instead.

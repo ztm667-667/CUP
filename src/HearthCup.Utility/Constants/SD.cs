@@ -20,6 +20,5 @@ public static class SD
     public const string TempDataError = "Error";
 
     // Security.
-    public const string RoleManager = "Manager";
     public const string LoginRateLimitPolicy = "login";
 }

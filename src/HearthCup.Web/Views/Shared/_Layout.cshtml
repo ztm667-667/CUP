@@ -1,4 +1,3 @@
-@inject HearthCup.Web.Services.BasketStore Basket
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,6 +7,7 @@
     <title>@ViewData["Title"] · Hearth &amp; Handle</title>
     <link rel="icon" href="~/images/favicon.svg" type="image/svg+xml"/>
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true"/>
+    <link rel="stylesheet" href="~/css/shop.css" asp-append-version="true"/>
     <script src="~/js/site.js" asp-append-version="true" defer></script>
 </head>
 <body>
@@ -17,9 +17,35 @@
     <header class="header">
         <div class="container nav">
             <a class="brand" asp-controller="Home" asp-action="Index"><img class="brand-icon" src="/images/favicon.svg" alt="" width="46" height="46"/><span>hearth <i>&amp;</i> handle<small>THE EVERYDAY CUP SHOP</small></span></a>
-            <nav aria-label="Main navigation"><a asp-controller="Home" asp-action="Shop">Shop</a></nav>
+
+            <nav aria-label="Main navigation" class="nav-links">
+                <a asp-controller="Home" asp-action="Shop">Shop</a>
+                @if (User.IsInRole(Roles.Buyer))
+                {
+                    <a asp-controller="Orders" asp-action="Index">My orders</a>
+                }
+                @if (User.IsInRole(Roles.Manager))
+                {
+                    <a asp-controller="Manage" asp-action="Index">Products</a>
+                    <a asp-controller="Manage" asp-action="Orders">Orders</a>
+                }
+            </nav>
+
             <form class="header-search" role="search" asp-controller="Home" asp-action="Shop" method="get"><label class="sr-only" for="headerSearch">Search all cups</label><input id="headerSearch" name="Q" type="search" maxlength="80" placeholder="Search cups, brands, colours…" value="@Context.Request.Query["Q"]"/><button type="submit" aria-label="Search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg></button></form>
-            <a class="basket-link" asp-controller="Cart" asp-action="Index"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 8h14l1 12H4L5 8Z M8 9V6a4 4 0 0 1 8 0v3"/></svg><span>Basket</span><b>@Basket.Read().Sum(x=>x.Quantity)</b></a>
+
+            @if (User.IsInRole(Roles.Buyer))
+            {
+                <a class="basket-link" asp-controller="Cart" asp-action="Index"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 8h14l1 12H4L5 8Z M8 9V6a4 4 0 0 1 8 0v3"/></svg><span>Basket</span><b>@await Component.InvokeAsync("CartBadge")</b></a>
+            }
+
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <form asp-controller="Account" asp-action="Logout" method="post" class="signout-form"><span class="who">@User.Identity.Name</span><button class="text-button" type="submit">Sign out</button></form>
+            }
+            else
+            {
+                <div class="nav-links"><a asp-controller="Account" asp-action="Login">Log in</a><a asp-controller="Account" asp-action="Register">Register</a></div>
+            }
         </div>
     </header>
 
@@ -32,15 +58,7 @@
     <footer>
         <div class="container footer-inner">
             <div><a class="brand" asp-controller="Home" asp-action="Index">hearth <i>&amp;</i> handle</a><p>Good cups. Small rituals. A place to call home.</p></div>
-            <div class="footer-right">
-                <span>Made for everyday moments.</span>
-                @if(User.Identity?.IsAuthenticated==true){
-                    <a asp-controller="Manage" asp-action="Index">Manage products</a>
-                    <form asp-controller="Account" asp-action="Logout" method="post"><button class="text-button" type="submit">Sign out</button></form>
-                }else{
-                    <a asp-controller="Account" asp-action="Login">Shop manager</a>
-                }
-            </div>
+            <div class="footer-right"><span>Made for everyday moments.</span><span>Order enquiries are handled by the shop manager.</span></div>
         </div>
         <div class="container footer-bottom">© @DateTime.Now.Year Hearth &amp; Handle <span>Coursework store · Product references from Amazon UK</span></div>
     </footer>

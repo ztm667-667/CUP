@@ -7,12 +7,22 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace HearthCup.Web.Controllers;
 
-/// <summary>Product management. Every action, including the GET forms, requires the manager role.</summary>
-[Authorize(Roles = SD.RoleManager)]
-public sealed class ManageController(ShopService shop, ILogger<ManageController> logger) : Controller
+/// <summary>Product and order management. Every action, including the GET forms, requires the manager role.</summary>
+[Authorize(Roles = Roles.Manager)]
+public sealed class ManageController(
+    ShopService shop,
+    OrderService orders,
+    IOrderRepository orderRepository,
+    ILogger<ManageController> logger) : Controller
 {
-    public async Task<IActionResult> Index([FromQuery] CatalogueQuery query, CancellationToken ct) =>
-        View(new BrowseView(query, await shop.BrowseAsync(query, ct)));
+    public async Task<IActionResult> Index([FromQuery] CatalogueQuery query, CancellationToken ct)
+    {
+        query.IncludeHidden = true;
+        var page = new BrowseView(query, await shop.BrowseAsync(query, ct));
+        var all = await orderRepository.ListAllAsync(ct);
+
+        return View(new ManageView(page, all.Count, all.Count(x => x.Status == OrderStatuses.Pending)));
+    }
 
     [HttpGet]
     public IActionResult Create() => View("Edit", new ProductInput());
@@ -64,6 +74,36 @@ public sealed class ManageController(ShopService shop, ILogger<ManageController>
         }
 
         return RedirectToAction(nameof(Index));
+    }
+
+    /// <summary>Lists or delists a cup. Delisted cups stay in the database and in past orders.</summary>
+    [HttpPost]
+    public async Task<IActionResult> ToggleListed(int id, CancellationToken ct)
+    {
+        var product = await shop.FindAsync(id, ct);
+        if (product is null) return NotFound();
+
+        await shop.SetListedAsync(id, !product.IsListed, ct);
+        logger.LogInformation("Manager set product {ProductId} listed={Listed}", id, !product.IsListed);
+        TempData[SD.TempDataSuccess] = product.IsListed ? "Cup delisted: hidden from the shop." : "Cup listed: back in the shop.";
+        return RedirectToAction(nameof(Index));
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Orders(CancellationToken ct)
+    {
+        var all = await orderRepository.ListAllAsync(ct);
+        return View(all.Select(OrderView.From).ToArray());
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Ship(int id, CancellationToken ct)
+    {
+        var shipped = await orders.ShipAsync(id, ct);
+        TempData[shipped ? SD.TempDataSuccess : SD.TempDataError] =
+            shipped ? $"Order #{id} marked as shipped." : $"Order #{id} cannot be shipped again.";
+
+        return RedirectToAction(nameof(Orders));
     }
 
     private async Task<IActionResult> Save(int? id, ProductInput input, CancellationToken ct)

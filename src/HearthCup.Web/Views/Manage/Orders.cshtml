@@ -1,0 +1,49 @@
+@model IReadOnlyList<OrderView>
+@{ViewData["Title"]="Orders";}
+<section class="container page-section">
+    <div class="section-heading">
+        <div>
+            <p class="eyebrow">BEHIND THE COUNTER</p>
+            <h1>Orders.</h1>
+        </div>
+        <a class="button" asp-action="Index">Back to products</a>
+    </div>
+
+    @if(Model.Count==0){
+        <p class="empty">No orders yet. Buyers place orders from their basket.</p>
+    }else{
+        @foreach(var order in Model){
+            <article class="order-card">
+                <header>
+                    <strong>Order #@order.Id</strong>
+                    <span class="status @(order.IsShipped ? "shipped" : "pending")">@order.Status</span>
+                    <span class="placed">@order.BuyerEmail · @order.PlacedAt.ToLocalTime().ToString("d MMM yyyy HH:mm")</span>
+                </header>
+                <table class="order-lines">
+                    <thead>
+                        <tr><th>Cup</th><th class="numeric">Unit price</th><th class="numeric">Quantity</th><th class="numeric">Line total</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach(var line in order.Lines){
+                            <tr>
+                                <td>@line.Name</td>
+                                <td class="numeric">@line.UnitPrice.ToString("C")</td>
+                                <td class="numeric">@line.Quantity</td>
+                                <td class="numeric">@line.Subtotal.ToString("C")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+                <footer>
+                    <span class="listing-tag">@(order.IsShipped ? "Shipped " + order.ShippedAt?.ToLocalTime().ToString("d MMM yyyy HH:mm") : "Not shipped yet")</span>
+                    <span class="basket-actions">
+                        <strong>@order.Total.ToString("C")</strong>
+                        @if(!order.IsShipped){
+                            <form asp-action="Ship" asp-route-id="@order.Id" method="post"><button class="button small" type="submit">Mark as shipped</button></form>
+                        }
+                    </span>
+                </footer>
+            </article>
+        }
+    }
+</section>

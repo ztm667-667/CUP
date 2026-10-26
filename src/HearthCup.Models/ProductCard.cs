@@ -12,12 +12,16 @@ public sealed record ProductCard(
     int Stock,
     string Description,
     string Design,
-    string Version)
+    string Version,
+    bool IsListed)
 {
     /// <summary>Only the approved local assets are ever turned into a URL.</summary>
     public string ImageUrl => Design.StartsWith("amazon-", StringComparison.Ordinal)
         ? $"/images/products/{Design[7..]}.jpg"
         : $"/images/{Design}.svg";
+
+    /// <summary>Sold out or delisted cups cannot be added to a basket.</summary>
+    public bool CanBuy => IsListed && Stock > 0;
 
     public static ProductCard From(Product product) => new(
         product.Id,
@@ -30,5 +34,6 @@ public sealed record ProductCard(
         product.Stock,
         product.Description,
         product.Design,
-        VersionToken.Encode(product.Version));
+        VersionToken.Encode(product.Version),
+        product.IsListed);
 }

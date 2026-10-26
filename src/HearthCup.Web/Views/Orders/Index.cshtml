@@ -1,0 +1,44 @@
+@model IReadOnlyList<OrderView>
+@{ViewData["Title"]="My orders";}
+<section class="container page-section">
+    <p class="eyebrow">YOUR ORDERS</p>
+    <h1>Order history.</h1>
+
+    @if(Model.Count==0){
+        <div class="empty">
+            <span>⌑</span>
+            <h2>No orders yet.</h2>
+            <p>Once you place an order it appears here, with the status the shop manager has set.</p>
+            <a class="button" asp-controller="Home" asp-action="Shop">Browse the cups</a>
+        </div>
+    }else{
+        @foreach(var order in Model){
+            <article class="order-card">
+                <header>
+                    <strong>Order #@order.Id</strong>
+                    <span class="status @(order.IsShipped ? "shipped" : "pending")">@order.Status</span>
+                    <span class="placed">Placed @order.PlacedAt.ToLocalTime().ToString("d MMM yyyy HH:mm")</span>
+                </header>
+                <table class="order-lines">
+                    <thead>
+                        <tr><th>Cup</th><th class="numeric">Unit price</th><th class="numeric">Quantity</th><th class="numeric">Line total</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach(var line in order.Lines){
+                            <tr>
+                                <td>@line.Name</td>
+                                <td class="numeric">@line.UnitPrice.ToString("C")</td>
+                                <td class="numeric">@line.Quantity</td>
+                                <td class="numeric">@line.Subtotal.ToString("C")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+                <footer>
+                    <span class="listing-tag">@(order.IsShipped ? "Shipped " + order.ShippedAt?.ToLocalTime().ToString("d MMM yyyy") : "Waiting for the shop to ship it")</span>
+                    <strong>@order.Total.ToString("C")</strong>
+                </footer>
+            </article>
+        }
+    }
+</section>

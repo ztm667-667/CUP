@@ -24,6 +24,9 @@ public sealed class Product
     /// <summary>Approved local image asset name; see <see cref="CupOptions.Designs"/>.</summary>
     public string Design { get; set; } = "oat-mug";
 
+    /// <summary>False when the manager has delisted the cup: hidden from the shop, kept in the database.</summary>
+    public bool IsListed { get; set; } = true;
+
     /// <summary>SQL Server rowversion used to detect concurrent edits.</summary>
     public byte[] Version { get; set; } = [];
 }

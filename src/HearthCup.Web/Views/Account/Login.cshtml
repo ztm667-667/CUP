@@ -1,21 +1,21 @@
 @model LoginInput
-@{ViewData["Title"]="Shop manager";}
+@{ViewData["Title"]="Sign in";}
 <section class="container page-section">
     <div class="login-panel">
-        <p class="eyebrow">BEHIND THE COUNTER</p>
+        <p class="eyebrow">YOUR ACCOUNT</p>
         <h1>Welcome back.</h1>
-        <p>Sign in to look after the cup collection.</p>
+        <p>Sign in to shop, or to manage the collection if you are the shop manager.</p>
 
         <form asp-action="Login" method="post">
             @if(!ViewData.ModelState.IsValid){
                 <div class="validation" role="alert"><ul>@foreach(var issue in ViewData.ModelState.Values.SelectMany(v=>v.Errors)){<li>@issue.ErrorMessage</li>}</ul></div>
             }
             <input asp-for="ReturnUrl" type="hidden"/>
-            <label asp-for="Username">Username</label><input asp-for="Username" autocomplete="username" required maxlength="80"/>
+            <label asp-for="Email">Email</label><input asp-for="Email" type="email" autocomplete="username" required maxlength="254"/>
             <label asp-for="Password">Password</label><input asp-for="Password" type="password" autocomplete="current-password" required maxlength="200"/>
             <button type="submit" class="button">Sign in ↗</button>
         </form>
 
-        <a asp-controller="Home" asp-action="Index">← Back to the shop</a>
+        <p class="small-print">No account yet? <a asp-action="Register">Register as a buyer</a>.</p>
     </div>
 </section>

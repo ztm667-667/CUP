@@ -58,6 +58,9 @@ public sealed class ShopService(IProductRepository repository)
     public Task DeleteAsync(int id, string version, CancellationToken ct = default) =>
         repository.DeleteAsync(id, ParseVersion(version), ct);
 
+    public Task SetListedAsync(int id, bool listed, CancellationToken ct = default) =>
+        repository.SetListedAsync(id, listed, ct);
+
     public async Task<IReadOnlyList<CartEntry>> AddAsync(
         IReadOnlyList<CartEntry> entries,
         int productId,
@@ -97,8 +100,8 @@ public sealed class ShopService(IProductRepository repository)
         {
             var product = products.FirstOrDefault(x => x.Id == entry.ProductId);
 
-            // Deleted or sold-out cups never survive a visit to the basket.
-            if (product is null || product.Stock == 0)
+            // Deleted, delisted or sold-out cups never survive a visit to the basket.
+            if (product is null || product.Stock == 0 || !product.IsListed)
             {
                 changed = true;
                 continue;

@@ -16,5 +16,8 @@ public sealed class CatalogueQuery
 
     public string Sort { get; set; } = "featured";
 
+    /// <summary>Set only by the manager screens, which must see delisted cups as well.</summary>
+    public bool IncludeHidden { get; set; }
+
     public int Page { get; set; } = 1;
 }

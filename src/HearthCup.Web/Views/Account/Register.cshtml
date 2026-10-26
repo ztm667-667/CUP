@@ -1,0 +1,21 @@
+@model RegisterInput
+@{ViewData["Title"]="Create a buyer account";}
+<section class="container page-section">
+    <div class="login-panel">
+        <p class="eyebrow">JOIN THE TABLE</p>
+        <h1>Create your account.</h1>
+        <p>Buyer accounts only. Your email address is your login name, and the password is six digits.</p>
+
+        <form asp-action="Register" method="post">
+            @if(!ViewData.ModelState.IsValid){
+                <div class="validation" role="alert"><ul>@foreach(var issue in ViewData.ModelState.Values.SelectMany(v=>v.Errors)){<li>@issue.ErrorMessage</li>}</ul></div>
+            }
+            <label asp-for="Email">Email</label><input asp-for="Email" type="email" autocomplete="username" required maxlength="254"/>
+            <label asp-for="Password">Six digit password</label><input asp-for="Password" type="password" inputmode="numeric" pattern="[0-9]{6}" minlength="6" maxlength="6" autocomplete="new-password" required/>
+            <label asp-for="ConfirmPassword">Repeat the password</label><input asp-for="ConfirmPassword" type="password" inputmode="numeric" pattern="[0-9]{6}" minlength="6" maxlength="6" autocomplete="new-password" required/>
+            <button type="submit" class="button">Create account ↗</button>
+        </form>
+
+        <p class="small-print">Already registered? <a asp-action="Login">Sign in</a>.</p>
+    </div>
+</section>

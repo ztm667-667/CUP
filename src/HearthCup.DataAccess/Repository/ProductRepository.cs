@@ -24,6 +24,7 @@ public sealed class ProductRepository(ApplicationDbContext db) : IProductReposit
 
         if (query.Category is not null) source = source.Where(x => x.Category == query.Category);
         if (query.Material is not null) source = source.Where(x => x.Material == query.Material);
+        if (!query.IncludeHidden) source = source.Where(x => x.IsListed);
         if (query.InStock) source = source.Where(x => x.Stock > 0);
 
         var total = await source.CountAsync(ct);
@@ -86,6 +87,15 @@ public sealed class ProductRepository(ApplicationDbContext db) : IProductReposit
 
         db.Entry(product).Property(x => x.Version).OriginalValue = expectedVersion;
         db.Products.Remove(product);
+        await SaveChangesAsync(ct);
+    }
+
+    public async Task SetListedAsync(int id, bool listed, CancellationToken ct = default)
+    {
+        var product = await db.Products.FirstOrDefaultAsync(x => x.Id == id, ct)
+            ?? throw new ShopRuleException("This cup has been deleted.");
+
+        product.IsListed = listed;
         await SaveChangesAsync(ct);
     }
 

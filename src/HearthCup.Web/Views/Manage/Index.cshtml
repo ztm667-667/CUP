@@ -1,4 +1,4 @@
-@model BrowseView
+@model ManageView
 @{ViewData["Title"]="Manage the collection";}
 <section class="container page-section" id="collection">
     <div class="section-heading">
@@ -9,29 +9,39 @@
         <a class="button" asp-action="Create">Add a new cup +</a>
     </div>
 
-    <form method="get" class="filters"><label class="sr-only" for="manageSearch">Search products</label><input id="manageSearch" name="Q" value="@Model.Query.Q" placeholder="Search the collection" maxlength="80"/><button class="button small" type="submit">Search</button><a asp-action="Index">Clear</a></form>
+    <div class="manager-stats">
+        <span><b>@Model.Catalogue.Catalogue.Total</b> products</span>
+        <span><b>@Model.OrderCount</b> orders</span>
+        <span><b>@Model.PendingCount</b> awaiting shipment</span>
+        <a asp-action="Orders">Open the order list →</a>
+    </div>
 
-    <p>@Model.Catalogue.Total products</p>
+    <form method="get" class="filters"><label class="sr-only" for="manageSearch">Search products</label><input id="manageSearch" name="Q" value="@Model.Catalogue.Query.Q" placeholder="Search the collection" maxlength="80"/><button class="button small" type="submit">Search</button><a asp-action="Index">Clear</a></form>
 
     <div class="table-scroll">
         <table>
             <thead>
-                <tr><th>Cup</th><th>Category</th><th>Price</th><th>Stock</th><th>Actions</th></tr>
+                <tr><th>Cup</th><th>Category</th><th>Price</th><th>Stock</th><th>Shop</th><th>Actions</th></tr>
             </thead>
             <tbody>
-                @foreach(var p in Model.Catalogue.Items){
+                @foreach(var p in Model.Catalogue.Catalogue.Items){
                     <tr>
                         <td><a class="admin-product" asp-controller="Home" asp-action="Details" asp-route-id="@p.Id"><img src="@p.ImageUrl" alt=""/>@p.Name</a></td>
                         <td>@p.Category</td>
                         <td>@p.Price.ToString("C")</td>
                         <td>@p.Stock</td>
-                        <td class="table-actions"><a asp-action="Edit" asp-route-id="@p.Id">Edit</a><a class="danger-text" asp-action="Delete" asp-route-id="@p.Id">Delete</a></td>
+                        <td><span class="listing-tag @(p.IsListed ? "listed" : "")">@(p.IsListed ? "Listed" : "Delisted")</span></td>
+                        <td class="table-actions">
+                            <a asp-action="Edit" asp-route-id="@p.Id">Edit</a>
+                            <form asp-action="ToggleListed" asp-route-id="@p.Id" method="post"><button class="text-button" type="submit">@(p.IsListed ? "Delist" : "List")</button></form>
+                            <a class="danger-text" asp-action="Delete" asp-route-id="@p.Id">Delete</a>
+                        </td>
                     </tr>
                 }
             </tbody>
         </table>
     </div>
 
-    @if(Model.Catalogue.Total==0){<p class="empty">No cups found.</p>}
-    <partial name="_Pagination" model="Model"/>
+    @if(Model.Catalogue.Catalogue.Total==0){<p class="empty">No cups found.</p>}
+    <partial name="_Pagination" model="Model.Catalogue"/>
 </section>
