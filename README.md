@@ -65,6 +65,14 @@ dotnet ef migrations add <Name> -p src/HearthCup.DataAccess -s src/HearthCup.Web
 
 用早期 `EnsureCreated` 建过库的机器没有迁移历史表，需要先删除该项目专属的 `HearthCup` 数据库，让迁移接管架构；不要删除其他数据库。
 
+需要单独交付数据库时，用 `database/hearthcup-schema-and-data.sql`（5 张表 + 18 件商品 + 管理员账号 + 3 条迁移记录）：
+
+```powershell
+sqlcmd -S .\SQLEXPRESS -E -i database/hearthcup-schema-and-data.sql
+```
+
+导入后应用会认为架构已是最新，不会重复建表。该脚本不代替迁移，只是同一套表的可导入快照。
+
 ## 验证
 
 ```powershell
