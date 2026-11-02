@@ -1,104 +1,104 @@
-# Hearth & Handle 水杯商城
+# Hearth & Handle Cup Store
 
-一个独立的 IMAT3701 Assessment 基础项目。使用 ASP.NET Core MVC、C#、n-tier 分层与 SQL Server Express。品牌为虚构示例；18 款商品资料和照片来自亚马逊英国站 2026-10-20 的一次性采集，运行时不调用外部商品 API。首页主图使用 Esra Afşar 在 Unsplash 发布的独立杯子生活摄影，来源见 docs/hero-photo-source.md。界面为英文，采用奶油白、陶土色与鼠尾草绿的温馨居家风格。
+An independent foundation project for the IMAT3701 Assessment, built with ASP.NET Core MVC, C#, an n-tier architecture, and SQL Server Express. The brand is fictional. Product information and photos for 18 items were collected from Amazon UK in a one-time snapshot on 2026-10-20; the application does not call external product APIs at runtime. The homepage hero image is a cup lifestyle photograph by Esra Afşar on Unsplash (see `docs/hero-photo-source.md`). The English-language interface uses a cosy cream, terracotta, and sage-green palette.
 
-## 在 Visual Studio 中运行
+## Running in Visual Studio
 
-1. 打开 `HearthCup.sln`。
-2. 将 `HearthCup.Web` 设为启动项目，选择 `HearthCup` 启动配置。
-3. 确认本机 `SQL Server (SQLEXPRESS)` 服务已运行。
-4. 按 F5 或 Ctrl+F5。浏览器打开 `http://localhost:5188`。
-5. 首次运行由迁移建库，写入 18 条亚马逊来源商品，并创建唯一的店铺管理员账号。
+1. Open `HearthCup.sln`.
+2. Set `HearthCup.Web` as the startup project and select the `HearthCup` launch profile.
+3. Ensure the local `SQL Server (SQLEXPRESS)` service is running.
+4. Press F5 or Ctrl+F5; the browser opens at `http://localhost:5188`.
+5. On the first run, migrations create the database, seed 18 Amazon-sourced products, and create the sole shop administrator account.
 
-也可在项目根目录运行 `powershell -ExecutionPolicy Bypass -File .\Start.ps1`。需要 .NET 9 SDK；首次运行需还原 NuGet 包。
+Alternatively, run `powershell -ExecutionPolicy Bypass -File .\Start.ps1` from the project root. The .NET 9 SDK is required, and NuGet packages must be restored on first run.
 
-## 账号与角色
+## Accounts and Roles
 
-两种身份，登录后进入的界面完全不同：
+Two roles have completely different interfaces after login:
 
-| 身份 | 来源 | 能做什么 |
+| Role | Creation | Capabilities |
 |---|---|---|
-| 管理员（Manager） | 由 `appsettings.json` 的 `Admin:Email` / `Admin:Password` 在首次启动时写入数据库 | 商品增删改、上下架、查看全部订单、点“Mark as shipped”发货 |
-| 买家（Buyer） | `/Account/Register` 自助注册 | 浏览、加购、改数量、下单、查看自己的订单状态 |
+| Manager | Seeded at startup using `Admin:Email` and `Admin:Password` from `appsettings.json` | Create, edit, delete, publish and unpublish products; view all orders; mark orders as shipped |
+| Buyer | Self-registration at `/Account/Register` | Browse, add to cart, change quantities, check out, and view personal order statuses |
 
-- 管理员账号默认 `mmx6671280@gmail.com` / `123456`，请在首次运行前按需修改配置。改邮箱后重启即可：种子会把已有的管理员行改名为新邮箱，不会产生第二个管理员。
-- 注册只开放买家：邮箱作为登录名，密码必须是 6 位数字，注册成功后自动登录。
-- 登录后按角色跳转：管理员进 `/Manage`，买家进 `/Shop`。
-- 所有密码只以哈希形式存库（`PasswordHasher`），数据库里没有明文。
-- 开发环境同时把当前管理员凭据写到 `src/HearthCup.Web/.local/admin-login.txt`，供本地登录与浏览器脚本读取；该目录被 Git 忽略，不要放进提交包。
+- The default administrator credentials are configured in `appsettings.json`; change them before first use as needed. Changing the configured email and restarting updates the existing administrator record rather than creating a second administrator.
+- Only buyers can register. Their email is the login name, and the password must be exactly six digits. Registration automatically signs them in.
+- After login, managers go to `/Manage` and buyers to `/Shop`.
+- Passwords are stored as hashes using `PasswordHasher`, never as plaintext in the database.
+- In development, current administrator credentials are also written to `src/HearthCup.Web/.local/admin-login.txt` for local login and browser scripts. This directory is ignored by Git and must not be committed or included in submissions.
 
-## 已实现范围
+## Implemented Features
 
-- 管理员：商品新增、查看、修改、删除（删除前确认）；**上架/下架**切换；商品名称、介绍、价格、库存、图片、分类等全部可编辑。
-- 买家：商品目录、名称/描述/颜色/材质搜索、分类与材质筛选、库存筛选、价格/名称排序、分页（每页 8 件）。
-- 购物车：登录后可见，按账号存库；支持**加减数量**、移除、小计与合计；下架或售罄的商品在查看时自动清理并收敛到当前库存。
-- 下单：一次事务内完成校验、写订单（价格与名称快照）、扣库存、清空购物车；库存不足或已下架会被拒绝并给出提示。
-- 订单：买家只看自己的订单与状态（Pending / Shipped）；管理员看全部订单、买家邮箱、明细与金额，并可点发货。
-- 安全：角色授权（买家进不了 `/Manage`，管理员进不了购物车与订单页）、Cookie 认证、防伪令牌、登录限流、数据注解与服务端校验、Razor 编码、CSP。
-- 适配桌面和手机、键盘焦点、跳转正文、语义化标签、减少动态效果偏好。
-- 前端只加载本地 `site.css`、`shop.css` 与 `site.js`，不引用第三方 CSS/JS 框架；页面不发起任何外部网络请求，CSP 也只允许同源资源。
+- **Manager:** Create, view, edit, and delete products (with deletion confirmation); toggle **published/unpublished** status; edit name, description, price, stock, image, category, and other fields.
+- **Buyer:** Browse the catalogue; search names, descriptions, colours, and materials; filter by category, material, and stock; sort by price or name; paginate at 8 products per page.
+- **Shopping cart:** Available after login and stored per account. Supports **increasing or decreasing quantities**, removal, subtotals, and totals. Unpublished or out-of-stock items are removed when the cart is viewed, and quantities are capped at current stock.
+- **Checkout:** A single transaction validates the order, stores it with price and product-name snapshots, deducts inventory, and empties the cart. Insufficient stock or unpublished products cause rejection with a message.
+- **Orders:** Buyers see only their own orders and `Pending` / `Shipped` statuses. Managers see all orders, buyer emails, line items, and totals, and can mark orders as shipped.
+- **Security:** Role-based access (buyers cannot access `/Manage`; managers cannot access buyer cart/order pages), cookie authentication, antiforgery tokens, login rate limiting, data annotations and server-side validation, Razor encoding, and CSP.
+- **Responsive and accessible UI:** Desktop/mobile layouts, keyboard focus, skip-to-content navigation, semantic markup, and reduced-motion preferences.
+- **Frontend:** Only local `site.css`, `shop.css`, and `site.js` are loaded; no third-party CSS/JS frameworks or external page requests. CSP permits same-origin resources only.
 
-没有支付、邮件、评论与真实物流；发货只是把订单状态改为 Shipped。商品加入购物车不预占库存，库存在下单事务内扣减。
+There is no payment processing, email, reviews, or real shipping integration; shipping simply changes the order status to `Shipped`. Cart items do not reserve inventory, which is deducted only during checkout.
 
-## 解决方案结构（n-tier 四层）
+## Solution Structure (Four-Tier n-Tier Architecture)
 
 ```text
-src/HearthCup.Models          商品与用户、订单、购物车实体，DTO、仓储与哈希端口
-src/HearthCup.Utility         业务规则服务（ShopService / AccountService / OrderService）与常量 SD
-src/HearthCup.DataAccess      EF Core DbContext、四个仓储、PasswordHasherAdapter、DbInitializer、迁移
-src/HearthCup.Web             MVC、Razor、ViewComponent、认证与授权、CSS
-tests/HearthCup.Checks        不依赖数据库的业务检查（29 项）
-docs/                        架构说明、Assessment 对应与验证范围
+src/HearthCup.Models          Product, user, order, and cart entities; DTOs; repository and hashing interfaces
+src/HearthCup.Utility         Business services (ShopService / AccountService / OrderService) and SD constants
+src/HearthCup.DataAccess      EF Core DbContext, four repositories, PasswordHasherAdapter, DbInitializer, migrations
+src/HearthCup.Web             MVC, Razor, ViewComponent, authentication/authorisation, CSS
+tests/HearthCup.Checks        29 database-independent business checks
+docs/                        Architecture, Assessment mapping, and validation scope
 ```
 
-依赖方向为 Models ← Utility ← DataAccess ← Web。Models 不含工程依赖；Utility 只依赖 Models；DataAccess 实现 Models 里的仓储端口与 `IPasswordHasher`；Web 是唯一组合根。业务服务只依赖端口，所以 `tests/HearthCup.Checks` 仅引用 Models 与 Utility 即可运行，不需要 SQL Server。
+Dependencies flow as Models ← Utility ← DataAccess ← Web. Models has no project dependencies; Utility depends only on Models; DataAccess implements repository interfaces and `IPasswordHasher` from Models; Web is the sole composition root. Services depend only on interfaces, so `tests/HearthCup.Checks` references Models and Utility without requiring SQL Server.
 
-## 数据库
+## Database
 
-连接字符串在 `src/HearthCup.Web/appsettings.json` 的 `ConnectionStrings:Shop`。默认 Windows 集成认证连接 `.\SQLEXPRESS`，数据库名为 `HearthCup`。换电脑时按实际实例名调整。
+The connection string is `ConnectionStrings:Shop` in `src/HearthCup.Web/appsettings.json`. By default it uses Windows integrated authentication with `.\SQLEXPRESS` and the `HearthCup` database. Adjust the instance name on other machines.
 
-架构由 EF Core 迁移管理，迁移文件位于 `src/HearthCup.DataAccess/Migrations`。启动时 `IDbInitializer` 调用 `Database.MigrateAsync()` 建库或升级，**只有数据库首次创建时**才写入 18 条示例商品——管理员把商品全部删光后重启不会自动恢复；管理员账号则在每次启动时确保存在。修改实体或 `ApplicationDbContext` 的映射后必须新增迁移，不要手改数据库：
+EF Core migrations in `src/HearthCup.DataAccess/Migrations` manage the schema. At startup, `IDbInitializer` calls `Database.MigrateAsync()`. The 18 sample products are seeded **only when the database is initially created**, so deleting them all and restarting will not restore them. The administrator account is checked on every startup. After changing entities or `ApplicationDbContext` mappings, add a migration rather than manually editing the database:
 
 ```powershell
 dotnet ef migrations add <Name> -p src/HearthCup.DataAccess -s src/HearthCup.Web -o Migrations
 ```
 
-用早期 `EnsureCreated` 建过库的机器没有迁移历史表，需要先删除该项目专属的 `HearthCup` 数据库，让迁移接管架构；不要删除其他数据库。
+Databases originally created with `EnsureCreated` lack migration history. Delete only this project's `HearthCup` database to allow migrations to manage its schema; do not delete other databases.
 
-需要单独交付数据库时，用 `database/hearthcup-schema-and-data.sql`（5 张表 + 18 件商品 + 管理员账号 + 3 条迁移记录）：
+For separate database delivery, use `database/hearthcup-schema-and-data.sql` (5 tables, 18 products, administrator account, and 3 migration records):
 
 ```powershell
 sqlcmd -S .\SQLEXPRESS -E -i database/hearthcup-schema-and-data.sql
 ```
 
-导入后应用会认为架构已是最新，不会重复建表。该脚本不代替迁移，只是同一套表的可导入快照。
+The application then recognises the imported schema as current and does not recreate its tables. This importable snapshot does not replace migrations.
 
-## 验证
+## Verification
 
 ```powershell
 dotnet build HearthCup.sln
 dotnet run --project tests/HearthCup.Checks
 ```
 
-同一组命令在 `.github/workflows/build.yml` 中随每次 push / PR 执行：还原、Release 构建、跑 29 项业务检查。检查工程不依赖 SQL Server，所以在 Ubuntu runner 上也能通过。
+The workflow in `.github/workflows/build.yml` runs these checks on every push and pull request: restore, Release build, and 29 business checks. They do not need SQL Server, so they also run on an Ubuntu runner.
 
-浏览器回归（需先启动网站，安装 Node.js 和 Chrome）：
+For browser regression tests, start the website and install Node.js and Chrome:
 
 ```powershell
 npm install
 npm run check:browser
 ```
 
-脚本从 `.local` 文件读取管理员凭据，自行注册一个测试买家走完“加购 → 下单 → 发货 → 查看状态”，之后不再残留测试数据（订单无法删除，请只在本地开发库运行）。输出在 `output/playwright/`。已执行情况见 `docs/validation.md`。
+The script reads administrator credentials from the `.local` file, registers a test buyer, and checks the flow “add to cart → place order → ship → view status”. It is designed to avoid leaving other test data, but **orders cannot be deleted: run it only against a local development database**. Output is written to `output/playwright/`. See `docs/validation.md` for executed tests.
 
-## 演示与报告准备
+## Demo and Report Preparation
 
-见 `docs/assessment-map.md`。这些是辅助理解项目的实现说明，不代替小组成员的真实贡献记录、个人反思或正式报告，也不是虚构的个人工作证明。AI 使用情况应按课程要求如实申报。
+See `docs/assessment-map.md`. These implementation notes help explain the project but do not replace actual group-member contribution records, personal reflections, or formal reports. They are not fabricated evidence of individual work. Declare AI usage truthfully according to course requirements.
 
-## 商品来源更新
+## Product Source Updates
 
-已一次性导入 18 款真实商品照片、名称、规格和参考价格，并重写简短介绍。见 `docs/amazon-sources.md` 与 `data/amazon-catalogue.json`。包装件数保留在名称和来源资料中。店铺库存为本地演示数量，价格为 2026-10-20 的查询快照；不是实时亚马逊价格或库存。原虚构数据的备份在 Web/.local/catalogue-backups。每个来源商品详情页可点击 Amazon UK 链接核对。
+A one-time import provided real photos, names, specifications, and reference prices for 18 products, alongside rewritten short descriptions. See `docs/amazon-sources.md` and `data/amazon-catalogue.json`. Package counts remain in product names and source records. Stock is local demonstration data, and prices are a snapshot from 2026-10-20, not live Amazon prices or inventory. Backups of the original fictional catalogue are in `Web/.local/catalogue-backups`. Each sourced product detail page links to Amazon UK for verification.
 
-## 首页与商品页
+## Homepage and Product Pages
 
-首页 `/` 仅展示品牌欢迎内容。点击 Find your favourite cup 或顶部 Shop 进入独立 `/Shop` 商品列表；顶部搜索从任意页面直接进入商品结果，支持名称、描述、颜色和材质。分类、筛选、排序和分页均在商品页完成；Logo 返回首页。
+The homepage (`/`) contains only the brand welcome content. “Find your favourite cup” or the top-navigation “Shop” link opens the separate `/Shop` catalogue. The top search bar goes straight to results from any page and searches names, descriptions, colours, and materials. Category selection, filtering, sorting, and pagination are handled on the product page. Clicking the logo returns home.
