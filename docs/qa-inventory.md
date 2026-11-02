@@ -8,3 +8,7 @@
 - Desktop 1440x1000 and mobile 390x844: initial headline, call to action, images, filter controls and cart usable; no horizontal overflow.
 - Original local SVGs load; no external network dependencies.
 - DB records survive process restart. No real orders/payments are claimed.
+
+## Group presentation work inventory
+
+The proposed three-member presentation split, PPT slide assignments, source-code responsibilities, document-section references, quality-attribute tactics, and live-demo checklist are recorded in [Group presentation inventory](group-presentation-inventory.md). This is a presentation-planning allocation, not proof of actual individual contributions.
